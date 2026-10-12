@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b12">
+<title>Quote Board</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--bg:#0b0b12;--c:#161624;--c2:#20203a;--t:#f2f2fa;--m:#8b8ba7;--a:#a78bfa;--a2:#f472b6;--g:#fbbf24}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(900px 500px at 50% -10%,#2a1f55,transparent),var(--bg);color:var(--t);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh;padding-bottom:96px}
+.w{max-width:640px;margin:auto;padding:0 14px}
+header{padding:26px 0 12px;text-align:center}
+h1{font-size:28px;letter-spacing:-.5px;background:linear-gradient(90deg,var(--a),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{color:var(--m);font-size:14px}
+nav{position:sticky;top:0;z-index:5;display:flex;gap:6px;padding:10px 0;background:linear-gradient(var(--bg) 70%,transparent)}
+nav button,.chips button{flex:1;border:0;border-radius:12px;padding:10px;background:var(--c);color:var(--m);font:600 14px inherit;font-family:inherit}
+nav button.on{background:linear-gradient(90deg,var(--a),var(--a2));color:#fff}
+.chips{display:flex;gap:6px;margin:4px 0 12px}
+.chips button{padding:7px;font-size:13px}.chips button.on{background:var(--c2);color:var(--t)}
+.card{background:var(--c);border:1px solid #2a2a45;border-radius:18px;padding:16px;margin-bottom:12px;animation:in .3s both;position:relative}
+.card.s{border-color:var(--a);box-shadow:0 0 0 1px var(--a)}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+.rank{position:absolute;top:-8px;left:12px;background:var(--g);color:#000;font:800 12px system-ui;border-radius:8px;padding:2px 8px}
+.q{font-size:18px;line-height:1.45;margin:6px 0 8px;word-wrap:break-word}
+.by{color:var(--a);font-weight:600;font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tags span{background:var(--c2);border-radius:8px;padding:3px 8px;font-size:12px;color:var(--m)}
+.tags i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:8px}
+.st button{border:0;background:none;font-size:24px;color:#3d3d5c;padding:0 1px}
+.st button.f{color:var(--g)}
+.meta{font-size:12px;color:var(--m)}
+.act{display:flex;gap:6px;margin-top:10px}
+.act button{flex:1;border:0;border-radius:10px;padding:9px;background:var(--c2);color:var(--t);font:600 13px inherit;font-family:inherit}
+.act button.p{background:linear-gradient(90deg,var(--a),var(--a2))}
+.ck{position:absolute;top:14px;right:14px;width:22px;height:22px;accent-color:var(--a)}
+form{display:grid;gap:10px}
+label{font-size:13px;color:var(--m)}
+input,textarea{width:100%;background:var(--c);border:1px solid #2a2a45;border-radius:12px;color:var(--t);padding:12px;font:inherit;outline:0}
+input:focus,textarea:focus{border-color:var(--a)}
+input[type=color]{height:46px;padding:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.go{border:0;border-radius:14px;padding:14px;background:linear-gradient(90deg,var(--a),var(--a2));color:#fff;font:700 16px inherit;font-family:inherit}
+.go:disabled{opacity:.5}
+.hp{position:absolute;left:-9999px}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:#14142199;backdrop-filter:blur(14px);display:none;gap:8px;z-index:9}
+.bar.on{display:flex}.bar button{flex:1;border:0;border-radius:12px;padding:13px;font:700 14px inherit;font-family:inherit;background:var(--c2);color:var(--t)}
+.bar .p{background:linear-gradient(90deg,var(--a),var(--a2))}
+.empty{text-align:center;color:var(--m);padding:40px 0}
+#toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,20px);background:#fff;color:#000;padding:10px 18px;border-radius:99px;font-weight:600;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="w">
+<header><h1>Quote Board</h1><p>Share a quote. Rate the best. Top picks become Shorts.</p></header>
+<nav><button data-t="top" class="on">🏆 Top</button><button data-t="new">🕒 New</button><button data-t="add">✍️ Post</button></nav>
+<div id="chips" class="chips"><button data-r="day">Today</button><button data-r="week">This week</button><button data-r="all" class="on">All time</button></div>
+<main id="list"></main>
+<form id="f" hidden>
+<div><label>Your name</label><input id="n" maxlength="40" required placeholder="e.g. Rahul"></div>
+<div><label>Your quote (max 280)</label><textarea id="t" rows="4" maxlength="280" required placeholder="Write something that hits..."></textarea></div>
+<label style="color:var(--t);font-weight:600;margin-top:6px">🎬 Your video wishes (optional)</label>
+<div class="two"><div><label>Song / music</label><input id="song" maxlength="80" placeholder="Lo-fi, Arijit..."></div><div><label>Background</label><input id="bg" maxlength="80" placeholder="Night city, nature..."></div></div>
+<div class="two"><div><label>Text colour</label><input id="col" type="color" value="#ffffff"><input id="usecol" type="checkbox" style="display:none"></div><div><label>Extra notes</label><input id="note" maxlength="200" placeholder="Slow fade, bold font..."></div></div>
+<input class="hp" id="web" tabindex="-1" autocomplete="off">
+<button class="go" id="go">Post quote</button>
+</form>
+</div>
+<div class="bar" id="bar"><button id="cs" class="p"></button><button id="cl">Clear</button></div>
+<div id="toast"></div>
+<script>
+const API='https://YOUR-WORKER.workers.dev'; // <-- paste your Worker URL
+const $=s=>document.querySelector(s);
+const me=localStorage.vid||(localStorage.vid=crypto.randomUUID());
+let Q=[],tab='top',rng='all',sel=new Set(),colTouched=false;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const score=q=>(q.c*q.a+3*3.5)/(q.c+3);
+const ago=ts=>{const m=(Date.now()-ts)/6e4;return m<1?'now':m<60?~~m+'m':m<1440?~~(m/60)+'h':~~(m/1440)+'d'};
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.i);toast.i=setTimeout(()=>t.classList.remove('on'),1800)}
+async function copy(s){try{await navigator.clipboard.writeText(s)}catch{const a=document.createElement('textarea');a.value=s;document.body.append(a);a.select();document.execCommand('copy');a.remove()}toast('Copied ✓')}
+const fmt=(q,w)=>`"${q.t}"\n— ${q.n}`+(w?wish(q):'');
+const wish=q=>{const v=q.v,l=[v.song&&'Song: '+v.song,v.bg&&'Background: '+v.bg,v.color&&'Text colour: '+v.color,v.note&&'Notes: '+v.note].filter(Boolean);return l.length?'\n['+l.join(' | ')+']':''};
+const hasWish=q=>!!wish(q);
+function view(){
+  let a=[...Q];
+  if(tab==='top'){const lim={day:864e5,week:6048e5,all:1e15}[rng];a=a.filter(q=>q.c>0&&Date.now()-q.ts<lim).sort((x,y)=>score(y)-score(x)||y.c-x.c)}
+  else a.sort((x,y)=>y.ts-x.ts);
+  $('#list').innerHTML=a.length?a.map((q,i)=>{
+    const v=q.v,tags=[v.song&&'🎵 '+esc(v.song),v.bg&&'🖼 '+esc(v.bg),v.color&&`<i style="background:${v.color}"></i>${v.color}`,v.note&&'📝 '+esc(v.note)].filter(Boolean);
+    return `<div class="card ${sel.has(q.id)?'s':''}">${tab==='top'?`<div class="rank">#${i+1}</div>`:''}<input class="ck" type="checkbox" data-id="${q.id}" ${sel.has(q.id)?'checked':''}>
+<div class="q">${esc(q.t)}</div><div class="by">— ${esc(q.n)}</div>${tags.length?`<div class="tags">${tags.map(t=>`<span>${t}</span>`).join('')}</div>`:''}
+<div class="row"><div class="st">${[1,2,3,4,5].map(s=>`<button data-id="${q.id}" data-s="${s}" class="${s<=(q.mine||Math.round(q.a))?'f':''}">★</button>`).join('')}</div><div class="meta">${q.c?q.a.toFixed(1)+' · '+q.c+' vote'+(q.c>1?'s':''):'No votes'} · ${ago(q.ts)}</div></div>
+<div class="act"><button class="p" data-cp="${q.id}">Copy</button>${hasWish(q)?`<button data-cw="${q.id}">Copy + wishes</button>`:''}</div></div>`}).join('')
+  :`<div class="empty">${tab==='top'?'No rated quotes yet. Rate some!':'Nothing here yet. Be the first to post.'}</div>`;
+  $('#bar').classList.toggle('on',sel.size>0);$('#cs').textContent=`Copy ${sel.size} selected`;
+}
+async function load(){if(document.hidden)return;try{Q=await(await fetch(API+'/?v='+me)).json();view()}catch{}}
+function go(t){tab=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  $('#f').hidden=t!=='add';$('#list').hidden=t==='add';$('#chips').style.display=t==='top'?'flex':'none';view()}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('button'),el=e.target;
+  if(el.matches('.ck')){el.checked?sel.add(el.dataset.id):sel.delete(el.dataset.id);return view()}
+  if(!b)return;
+  if(b.closest('nav'))return go(b.dataset.t);
+  if(b.dataset.r){rng=b.dataset.r;document.querySelectorAll('.chips button').forEach(x=>x.classList.toggle('on',x===b));return view()}
+  const q=Q.find(x=>x.id===(b.dataset.id||b.dataset.cp||b.dataset.cw));
+  if(b.dataset.cp)return copy(fmt(q));
+  if(b.dataset.cw)return copy(fmt(q,1));
+  if(b.dataset.s&&q){const s=+b.dataset.s;if(!q.mine)q.c++;q.a=q.mine?(q.a*q.c-q.mine+s)/q.c:(q.a*(q.c-1)+s)/q.c;q.mine=s;view();
+    fetch(API+'/rate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:q.id,stars:s,voter:me})}).then(r=>r.ok?0:toast('Vote failed')).catch(()=>toast('Vote failed'))}
+  if(b.id==='cs')copy(Q.filter(x=>sel.has(x.id)).map(x=>fmt(x)).join('\n\n'));
+  if(b.id==='cl'){sel.clear();view()}
+});
+$('#col').oninput=()=>colTouched=true;
+$('#f').onsubmit=async e=>{e.preventDefault();const g=$('#go');g.disabled=true;g.textContent='Posting...';
+  try{const r=await fetch(API+'/quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:$('#n').value,text:$('#t').value,website:$('#web').value,video:{song:$('#song').value,bg:$('#bg').value,color:colTouched?$('#col').value:'',note:$('#note').value}})});
+    const d=await r.json();if(!r.ok)throw d.error;
+    localStorage.nm=$('#n').value;$('#t').value=$('#song').value=$('#bg').value=$('#note').value='';colTouched=false;toast('Posted 🎉');go('new');load()}
+  catch(x){toast(typeof x==='string'?x:'Could not post')}
+  g.disabled=false;g.textContent='Post quote'};
+$('#n').value=localStorage.nm||'';
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+load();setInterval(load,8000);document.addEventListener('visibilitychange',load);view();
+</script>
+</body>
+</html>
