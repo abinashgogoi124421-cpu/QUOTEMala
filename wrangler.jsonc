@@ -4,6 +4,6 @@
   "compatibility_date": "2026-10-06",
   "observability": { "enabled": true },
   "kv_namespaces": [
-    { "binding": "DB", "id": "PASTE_YOUR_KV_NAMESPACE_ID_HERE" }
+    { "binding": "DB", "id": "694a0063f407477d80e7d9a046a4fdce" }
   ]
 }
